@@ -1,0 +1,31 @@
+
+#build stage
+# base image
+FROM node:lts-alpine3.18 AS builder
+
+# create a dir
+WORKDIR /usr/src/app
+
+COPY package.json package-lock.json* tsconfig.json /usr/src/app/
+
+RUN npm install
+# copy project to the dir
+COPY . /usr/src/app/
+
+# install and build the image
+RUN npm run build
+
+
+#run stage
+# base image
+FROM node:lts-alpine3.18 AS runner
+
+# create a dir
+WORKDIR /usr/src/app
+COPY --from=builder /usr/src/app/dist ./dist
+COPY --from=builder /usr/src/app/package.json .
+COPY --from=builder /usr/src/app/package-lock.json .
+
+EXPOSE 3000
+
+CMD [ "npm" ,"run","start" ]
